@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Weather Forecast & Travel Safety</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #4285f4;
+            --danger: #ea4335;
+            --warning: #fbbc05;
+            --success: #34a853;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --gray: #5f6368;
+            --card-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a73e8, #4285f4);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            transition: var(--transition);
+        }
+
+        body.dark-theme {
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+        }
+
+        /* Weather Animation Container */
+        .weather-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffde00, #ff9800);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ff9800;
+            animation: sunPulse 3s infinite alternate;
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            filter: blur(5px);
+        }
+
+        .raindrop {
+            position: absolute;
+            width: 3px;
+            height: 10px;
+            background: #4285f4;
+            border-radius: 50% 50% 0 0;
+            animation: rainFall linear infinite;
+        }
+
+        .snowflake {
+            position: absolute;
+            color: #fff;
+            font-size: 20px;
+            animation: snowFall linear infinite;
+        }
+
+        .wind-particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: windMove linear infinite;
+        }
+
+        /* Animations */
+        @keyframes sunPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        @keyframes rainFall {
+            0% { transform: translateY(-20px); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        @keyframes snowFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes windMove {
+            0% { transform: translateX(-100px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(100vw); opacity: 0; }
+        }
+
+        @keyframes cloudFloat {
+            0% { transform: translateX(-20%); }
+            100% { transform: translateX(100vw); }
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            position: relative;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: var(--warning);
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .language-selector select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .language-selector select:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .language-selector select option {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+
+        .search-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            overflow: hidden;
+            padding: 5px 15px;
+            width: 400px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .search-container input {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-container input:focus {
+            outline: none;
+        }
+
+        .search-container button {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .sos-button {
+            background: var(--danger);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            padding: 10px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(234, 67, 53, 0.4);
+            border: var(--glass-border);
+            white-space: nowrap;
+        }
+
+        .sos-button.active {
+            background: var(--success);
+            box-shadow: 0 4px 10px rgba(52, 168, 83, 0.4);
+        }
+
+        .sos-button i {
+            animation: pulse 1.5s infinite;
+        }
+
+        .sos-button.active i {
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Glass Card Effect - Enhanced Liquid Glass */
+        .glass-card {
+            background: linear-gradient(
+                135deg, 
+                rgba(255, 255, 255, 0.1), 
+                rgba(255, 255, 255, 0.05)
+            );
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            color: var(--light);
+            border: var(--glass-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Current Weather */
+        .current-weather {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px;
+            position: relative;
+        }
+
+        .weather-info {
+            flex: 1;
+        }
+
+        .temp-large {
+            font-size: 96px;
+            font-weight: 300;
+            line-height: 1;
+            margin: 10px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to right, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .weather-condition {
+            font-size: 28px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .location-info {
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .weather-icon {
+            font-size: 120px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Weather Stats */
+        .weather-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: var(--glass-border);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 18px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Hourly Forecast */
+        .hourly-forecast {
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .hourly-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .hour-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            min-width: 90px;
+            border: var(--glass-border);
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .hour-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .hour-time {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .hour-temp {
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: 5px;
+        }
+
+        /* Weekly Forecast */
+        .weekly-forecast {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .day-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            position: relative;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .day-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .day-weather {
+            font-size: 36px;
+            margin: 10px 0;
+        }
+
+        .day-temp {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .day-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .alert-icon {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--danger);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 3px 10px rgba(234, 67, 53, 0.5);
+        }
+
+        /* SOS Panel */
+        .sos-panel {
+            background: rgba(234, 67, 53, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(234, 67, 53, 0.3);
+            display: none;
+        }
+
+        .sos-panel.active {
+            display: block;
+        }
+
+        .sos-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sos-banner {
+            background: rgba(234, 67, 53, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .emergency-contacts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+        }
+
+        .contact-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .contact-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .contact-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .whatsapp-button {
+            background: var(--success);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            padding: 15px 25px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+            margin: 20px auto 0;
+            width: 300px;
+            box-shadow: 0 4px 15px rgba(52, 168, 83, 0.4);
+        }
+
+        .whatsapp-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .offline-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        /* Notification - Fixed z-index and blur issue */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--dark);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            z-index: 5000; /* Increased z-index to appear above modal */
+            max-width: 350px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        /* Registration Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--glass-shadow);
+            border: var(--glass-border);
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        /* Loader */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Search Suggestions */
+        .suggestions-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0 0 15px 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .suggestions-container.visible {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: var(--dark);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .suggestion-item i {
+            color: var(--primary);
+        }
+
+        /* Weather Advisory */
+        .advisory-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .advisory-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+        }
+
+        .advisory-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .advisory-card ul {
+            padding-left: 20px;
+        }
+
+        .advisory-card li {
+            margin-bottom: 8px;
+        }
+
+        /* Location Detection */
+        .location-detect {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .location-detect:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* OTP Verification */
+        .otp-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .otp-input {
+            width: 100%;
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            border-radius: 10px;
+            border: var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Data Protection */
+        .data-protection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .protection-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            border: var(--glass-border);
+        }
+
+        .protection-item i {
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .protection-toggle {
+            margin-top: 10px;
+        }
+
+        /* Travel Safety Features */
+        .travel-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: var(--glass-border);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        /* SOS Panel */
+        .sos-panel-emergency {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(234, 67, 53, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            transform: translateY(-100%);
+            transition: transform 0.5s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .sos-panel-emergency.active {
+            transform: translateY(0);
+        }
+
+        .sos-panel-emergency h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .sos-panel-emergency p {
+            font-size: 20px;
+            max-width: 600px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .sos-actions {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .sos-btn {
+            background: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sos-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 500px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Responsive Design - Enhanced for Mobile */
+        @media (max-width: 900px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .current-weather {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .weather-icon {
+                margin-top: 20px;
+                font-size: 80px;
+            }
+            
+            .weekly-forecast {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .temp-large {
+                font-size: 72px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .logo {
+                font-size: 22px;
+            }
+            
+            .sos-button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            
+            .temp-large {
+                font-size: 64px;
+            }
+            
+            .weather-condition {
+                font-size: 22px;
+            }
+            
+            .location-info {
+                font-size: 18px;
+            }
+            
+            .weather-icon {
+                font-size: 70px;
+            }
+            
+            .emergency-contacts {
+                grid-template-columns: 1fr;
+            }
+            
+            .weather-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .advisory-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .travel-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .whatsapp-button {
+                width: 100%;
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .glass-card {
+                padding: 20px;
+            }
+            
+            .current-weather {
+                padding: 20px;
+            }
+            
+            .stat-item {
+                padding: 12px;
+            }
+            
+            .stat-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .stat-value {
+                font-size: 16px;
+            }
+            
+            .hour-item {
+                min-width: 75px;
+                padding: 12px;
+            }
+            
+            .day-card {
+                padding: 15px;
+            }
+            
+            .day-weather {
+                font-size: 28px;
+            }
+            
+            .sos-panel-emergency h2 {
+                font-size: 36px;
+            }
+            
+            .sos-panel-emergency p {
+                font-size: 18px;
+                padding: 0 15px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .logo {
+                font-size: 20px;
+            }
+            
+            .temp-large {
+                font-size: 56px;
+            }
+            
+            .weather-condition {
+                font-size: 20px;
+            }
+            
+            .hour-item {
+                min-width: 65px;
+                padding: 10px;
+            }
+            
+            .day-card {
+                padding: 12px;
+            }
+            
+            .day-temp {
+                font-size: 16px;
+            }
+            
+            .sos-panel-emergency h2 {
+                font-size: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Weather Animation Container -->
+    <div class="weather-animation" id="weatherAnimation">
+        <div class="sun" id="sunAnimation"></div>
+        <div class="cloud" style="top: 10%; left: 10%; width: 100px; height: 40px; animation: cloudFloat 20s infinite linear;"></div>
+        <div class="cloud" style="top: 15%; left: 30%; width: 120px; height: 50px; animation: cloudFloat 25s infinite linear; animation-delay: -5s;"></div>
+        <div class="cloud" style="top: 25%; left: 60%; width: 150px; height: 60px; animation: cloudFloat 30s infinite linear; animation-delay: -10s;"></div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="weatherNotification">
+        <div class="notification-icon">
+            <i class="fas fa-cloud-sun"></i>
+        </div>
+        <div class="notification-content">
+            <h4 id="notificationTitle">Weather Alert!</h4>
+            <p id="notificationMessage">Rain expected in 30 minutes. Bring an umbrella or raincoat.</p>
+        </div>
+    </div>
+
+    <!-- SOS Emergency Panel -->
+    <div class="sos-panel-emergency" id="sosEmergencyPanel">
+        <h2><i class="fas fa-exclamation-triangle"></i> EMERGENCY MODE ACTIVATED</h2>
+        <p>Your location and emergency information has been sent to your emergency contacts. Help is on the way.</p>
+        
+        <div class="progress-bar">
+            <div class="progress" id="sosProgress"></div>
+        </div>
+        
+        <p id="emergencyLocation">Current Location: Loading...</p>
+        
+        <div class="sos-actions">
+            <button class="sos-btn" id="cancelSos">
+                <i class="fas fa-times"></i> Cancel SOS
+            </button>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal-overlay" id="registrationModal">
+        <div class="modal">
+            <h2><i class="fas fa-user-plus"></i> Complete Registration</h2>
+
+            <!-- Registration Form -->
+            <div id="registrationForm">
+                <div class="form-group">
+                    <label for="userName">Full Name</label>
+                    <input type="text" id="userName" placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="userEmail">Email Address</label>
+                    <input type="email" id="userEmail" placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="emergencyContact">Emergency Contact Number</label>
+                    <input type="tel" id="emergencyContact" placeholder="Enter emergency contact number">
+                </div>
+
+                <div class="location-access">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Auto location access enabled for emergency services</span>
+                </div>
+
+                <button class="btn" id="registerBtn">Register</button>
+            </div>
+
+            <!-- OTP Verification -->
+            <div id="otpVerification" style="display: none;">
+                <div class="text-center">
+                    <i class="fas fa-envelope" style="font-size: 30px; margin-bottom: 15px; color: var(--primary);"></i>
+                    <h3>Verify Your Email</h3>
+                    <p>We've sent a 6-digit code to <span id="registeredEmail"></span></p>
+                    <p style="font-size:14px; color:gray;">(Demo OTP: <b id="demoOtpCode"></b>)</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Enter OTP</label>
+                    <div class="otp-container">
+                        <input type="text" maxlength="1" class="otp-digit">
+                        <input type="text" maxlength="1" class="otp-digit">
+                        <input type="text" maxlength="1" class="otp-digit">
+                        <input type="text" maxlength="1" class="otp-digit">
+                        <input type="text" maxlength="1" class="otp-digit">
+                        <input type="text" maxlength="1" class="otp-digit">
+                    </div>
+                    <span class="resend-otp" id="resendOtp">Resend OTP</span>
+                </div>
+
+                <button class="btn" id="verifyOtpBtn">Verify & Continue</button>
+                <button class="btn btn-secondary mt-3" id="backToRegister">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="logo">
+                <i class="fas fa-cloud-sun"></i>
+                 Weather Forecast
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="searchLocation" placeholder="Search city...">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
+                <div class="suggestions-container" id="suggestionsContainer">
+                    <!-- Suggestions will appear here -->
+                </div>
+            </div>
+            
+            <button class="sos-button" id="sosToggle">
+                <i class="fas fa-shield-alt"></i>
+                TRAVEL SAFETY MODE: OFF
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Current Weather Card -->
+            <div class="glass-card">
+                <div class="current-weather">
+                    <div class="weather-info">
+                        <div class="weather-condition">
+                            <i id="weatherIconMain" class="fas fa-sun"></i>
+                            <span id="weatherDesc">Sunny</span>
+                        </div>
+                        <div class="temp-large" id="currentTemp">24°</div>
+                        <div class="location-info">
+                            <i class="fas fa-location-dot"></i>
+                            <span id="location">New York, US</span>
+                        </div>
+                        
+                        <div class="location-detect" id="detectLocation">
+                            <i class="fas fa-location-crosshairs"></i>
+                            <span>Detect My Location</span>
+                        </div>
+                        
+                        <!-- Weather Stats -->
+                        <div class="weather-stats">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div>
+                                    <div class="stat-value" id="windSpeed">12 km/h</div>
+                                    <div class="stat-label">Wind</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div>
+                                    <div class="stat-value" id="humidity">65%</div>
+                                    <div class="stat-label">Humidity</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-temperature-high"></i>
+                                </div>
+                                <div>
+                                    <div class="stat-value" id="feelsLike">26°</div>
+                                    <div class="stat-label">Feels Like</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-sun"></i>
+                                </div>
+                                <div>
+                                    <div class="stat-value" id="sunrise">6:45 AM</div>
+                                    <div class="stat-label">Sunrise</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="weather-icon" id="weatherIconLarge">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hourly Forecast -->
+            <div class="glass-card">
+                <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-clock"></i> Hourly Forecast
+                </h2>
+                
+                <div class="hourly-forecast">
+                    <div class="hourly-container" id="hourlyForecast">
+                        <!-- Hourly items will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekly Forecast -->
+            <div class="glass-card">
+                <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-calendar-week"></i> 7-Day Forecast
+                </h2>
+                
+                <div class="weekly-forecast" id="weeklyForecast">
+                    <!-- Day cards will be added here dynamically -->
+                </div>
+            </div>
+            
+            <!-- Weather Advisory -->
+            <div class="glass-card">
+                <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-exclamation-circle"></i> Weather Advisory
+                </h2>
+                
+                <div class="advisory-cards">
+                    <div class="advisory-card" id="healthAdvisory">
+                        <h4><i class="fas fa-heartbeat"></i> Health Advisory</h4>
+                        <ul id="healthTips">
+                            <li>UV index is high today - use sunscreen</li>
+                            <li>Good air quality - suitable for outdoor activities</li>
+                            <li>Stay hydrated throughout the day</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="advisory-card" id="activityAdvisory">
+                        <h4><i class="fas fa-hiking"></i> Activity Suggestions</h4>
+                        <ul id="activityTips">
+                            <li>Great day for beach activities</li>
+                            <li>Ideal conditions for hiking</li>
+                            <li>Perfect weather for outdoor sports</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="advisory-card" id="travelAdvisory">
+                        <h4><i class="fas fa-plane-departure"></i> Travel Advisory</h4>
+                        <ul id="travelTips">
+                            <li>No travel disruptions expected</li>
+                            <li>Road conditions are excellent</li>
+                            <li>Flight delays unlikely</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Protection -->
+            <div class="glass-card">
+                <h2 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-shield-alt"></i> Data Protection
+                </h2>
+                
+                <div class="data-protection">
+                    <div class="protection-item">
+                        <i class="fas fa-database"></i>
+                        <div>Local backup stored for 24 hours</div>
+                    </div>
+                    
+                    <div class="protection-item">
+                        <i class="fas fa-shield-virus"></i>
+                        <div>Service failure protection active</div>
+                    </div>
+                    
+                    <div class="protection-item">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <div>Enable Auto Backup</div>
+                        <label class="toggle-switch protection-toggle">
+                            <input type="checkbox" id="autoBackup" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SOS & Travel Safety Panel -->
+            <div class="sos-panel" id="sosPanel">
+                <div class="sos-header">
+                    <i class="fas fa-shield-alt" style="font-size: 28px;"></i>
+                    <h2>Travel Safety & SOS Mode</h2>
+                </div>
+                
+                <div class="sos-banner">
+                    <p><i class="fas fa-shield-alt"></i> Safety Mode Activated - Your protection is our priority!</p>
+                </div>
+                
+                <div class="travel-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h3>Safety Checklist</h3>
+                        <p>Essential items and preparations for your trip</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h3>Route Planner</h3>
+                        <p>Weather-optimized travel routes</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-hotel"></i>
+                        </div>
+                        <h3>Safe Havens</h3>
+                        <p>Nearby shelters and safe locations</p>
+                    </div>
+                </div>
+                
+                <div class="emergency-contacts">
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="contact-name">Police</div>
+                        <div class="contact-number">100</div>
+                        <button class="sos-button" style="padding: 8px 15px; font-size: 14px;">
+                            <i class="fas fa-phone-alt"></i> Call
+                        </button>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-ambulance"></i>
+                        </div>
+                        <div class="contact-name">Ambulance</div>
+                        <div class="contact-number">102 / 108</div>
+                        <button class="sos-button" style="padding: 8px 15px; font-size: 14px;">
+                            <i class="fas fa-phone-alt"></i> Call
+                        </button>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="contact-name">Fire</div>
+                        <div class="contact-number">101</div>
+                        <button class="sos-button" style="padding: 8px 15px; font-size: 14px;">
+                            <i class="fas fa-phone-alt"></i> Call
+                        </button>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-hands-helping"></i>
+                        </div>
+                        <div class="contact-name">Disaster Management</div>
+                        <div class="contact-number">1078</div>
+                        <button class="sos-button" style="padding: 8px 15px; font-size: 14px;">
+                            <i class="fas fa-phone-alt"></i> Call
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="whatsapp-button" id="shareLocation">
+                    <i class="fab fa-whatsapp"></i> Share Live Location via WhatsApp
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider"></span>
+                </label>
+                <i class="fas fa-sun"></i>
+                <span>Dark Theme</span>
+            </div>
+            
+            <div class="offline-indicator">
+                <i class="fas fa-wifi"></i>
+                <span>Last updated: <span id="updateTime">10:45 AM</span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = "30af867776be46f68dc124948250208";
+        let currentLocation = "New York";
+        let debounceTimer;
+        let userLocationDetected = false;
+        let currentWeatherCondition = "Clear";
+        let userData = {};
+        let backupData = {};
+        let currentIsDay = 1;
+        
+        // DOM Elements
+        const sosToggle = document.getElementById('sosToggle');
+        const sosPanel = document.getElementById('sosPanel');
+        const sosEmergencyPanel = document.getElementById('sosEmergencyPanel');
+        const cancelSos = document.getElementById('cancelSos');
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const weatherAnimation = document.getElementById('weatherAnimation');
+        const weatherIconMain = document.getElementById('weatherIconMain');
+        const weatherIconLarge = document.getElementById('weatherIconLarge');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchInput = document.getElementById('searchLocation');
+        const suggestionsContainer = document.getElementById('suggestionsContainer');
+        const detectLocationBtn = document.getElementById('detectLocation');
+        const shareLocationBtn = document.getElementById('shareLocation');
+        const notification = document.getElementById('weatherNotification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const hourlyForecast = document.getElementById('hourlyForecast');
+        const weeklyForecast = document.getElementById('weeklyForecast');
+        const updateTime = document.getElementById('updateTime');
+        const registerBtn = document.getElementById('registerBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const backToRegister = document.getElementById('backToRegister');
+        const resendOtp = document.getElementById('resendOtp');
+        const registeredEmail = document.getElementById('registeredEmail');
+        const registrationForm = document.getElementById('registrationForm');
+        const otpVerification = document.getElementById('otpVerification');
+        const registrationModal = document.getElementById('registrationModal');
+        const registerTrigger = document.getElementById('registerTrigger');
+        const healthTips = document.getElementById('healthTips');
+        const activityTips = document.getElementById('activityTips');
+        const travelTips = document.getElementById('travelTips');
+        const emergencyLocation = document.getElementById('emergencyLocation');
+        const autoBackup = document.getElementById('autoBackup');
+        const locationDisplay = document.getElementById('location');
+        
+        // Weather display elements
+         const currentTemp = document.getElementById('currentTemp');
+        const weatherDesc = document.getElementById('weatherDesc');
+        const feelsLike = document.getElementById('feelsLike');
+        const windSpeed = document.getElementById('windSpeed');
+        const windDirection = document.getElementById('windDirection');
+        const sunrise = document.getElementById('sunrise');
+        const humidity = document.getElementById('humidity');
+        const pressure = document.getElementById('pressure');
+        const airQuality = document.getElementById('airQuality');
+        const pollenInfo = document.getElementById('pollenInfo');
+        const uvInfo = document.getElementById('uvInfo');
+        const carWashInfo = document.getElementById('carWashInfo');
+        const workoutInfo = document.getElementById('workoutInfo');
+        const trafficInfo = document.getElementById('trafficInfo');
+        const tripInfo = document.getElementById('tripInfo');
+        const mosquitoInfo = document.getElementById('mosquitoInfo');
+        
+        // Initialize the app
+        function initApp() {
+            // Set initial theme based on time
+            const hour = new Date().getHours();
+            if (hour < 6 || hour > 18) {
+                body.classList.add('dark-theme');
+                themeToggle.checked = true;
+            }
+            
+            // Set event listeners
+            sosToggle.addEventListener('click', toggleSOS);
+            cancelSos.addEventListener('click', deactivateSOS);
+            themeToggle.addEventListener('change', toggleTheme);
+            searchBtn.addEventListener('click', searchWeather);
+            searchInput.addEventListener('input', handleSearchInput);
+            detectLocationBtn.addEventListener('click', detectLocation);
+            shareLocationBtn.addEventListener('click', shareLocation);
+            registerBtn.addEventListener('click', registerUser);
+            verifyOtpBtn.addEventListener('click', verifyOtp);
+            backToRegister.addEventListener('click', showRegistrationForm);
+            resendOtp.addEventListener('click', generateOtp);
+            registerTrigger && registerTrigger.addEventListener('click', showRegistration);
+            autoBackup.addEventListener('change', toggleAutoBackup);
+            
+            // OTP digit inputs
+            const otpDigits = document.querySelectorAll('.otp-digit');
+            otpDigits.forEach((digit, index) => {
+                digit.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1 && index < otpDigits.length - 1) {
+                        otpDigits[index + 1].focus();
+                    }
+                });
+                
+                digit.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                        otpDigits[index - 1].focus();
+                    }
+                });
+            });
+            
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target)) {
+                    suggestionsContainer.classList.remove('visible');
+                }
+            });
+            
+            // Check registration
+            checkRegistration();
+            
+            // Detect location on app load
+            detectLocationOnLoad();
+        }
+        
+        // Detect location on app load
+        function detectLocationOnLoad() {
+            if (navigator.geolocation) {
+                locationDisplay.textContent = "Detecting location...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        getLocationName(position.coords.latitude, position.coords.longitude);
+                        showNotification('Location Detected', 'Using your current location');
+                        userLocationDetected = true;
+                    },
+                    (error) => {
+                        showNotification('Info', 'Using default location');
+                        currentLocation = "default";
+                        fetchWeather(currentLocation);
+                        userLocationDetected = false;
+                    }
+                );
+            } else {
+                showNotification('Info', 'Using default location');
+                currentLocation = "default";
+                fetchWeather(currentLocation);
+                userLocationDetected = false;
+            }
+        }
+        
+        // Check if user is registered
+        function checkRegistration() {
+            const savedUser = localStorage.getItem('weatherUser');
+            if (!savedUser) {
+                showRegistration();
+            } else {
+                userData = JSON.parse(savedUser);
+            }
+        }
+        
+        // Show registration modal
+        function showRegistration() {
+            registrationModal.style.display = 'flex';
+        }
+        
+        // Hide registration modal
+        function hideRegistration() {
+            registrationModal.style.display = 'none';
+        }
+        
+        // Show registration form
+        function showRegistrationForm() {
+            registrationForm.style.display = 'block';
+            otpVerification.style.display = 'none';
+        }
+        
+        // Register user
+        function registerUser() {
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const emergencyContact = document.getElementById('emergencyContact').value.trim();
+            
+            if (!name || !email || !emergencyContact) {
+                showNotification('Error', 'Please fill all fields');
+                return;
+            }
+            
+            if (!validateEmail(email)) {
+                showNotification('Error', 'Please enter a valid email address');
+                return;
+            }
+            
+            userData = {
+                name,
+                email,
+                emergencyContact,
+                registeredAt: new Date().toISOString()
+            };
+            
+            // Show OTP verification
+            registeredEmail.textContent = email;
+            registrationForm.style.display = 'none';
+            otpVerification.style.display = 'block';
+            
+            // Generate and send OTP (simulated)
+            generateOtp();
+        }
+        
+        // Generate OTP
+        function generateOtp() {
+            userData.otp = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('demoOtpCode').textContent = userData.otp;
+            showNotification('OTP Sent', `OTP sent to ${userData.email}: ${userData.otp} (simulated for demo)`);
+            
+            // Enable resend OTP after 30 seconds
+            resendOtp.style.pointerEvents = 'none';
+            resendOtp.style.opacity = '0.5';
+            setTimeout(() => {
+                resendOtp.style.pointerEvents = 'auto';
+                resendOtp.style.opacity = '1';
+            }, 30000);
+        }
+        
+        // Verify OTP
+        function verifyOtp() {
+            const otpDigits = document.querySelectorAll('.otp-digit');
+            let enteredOtp = '';
+            otpDigits.forEach(digit => {
+                enteredOtp += digit.value;
+            });
+            
+            if (enteredOtp === userData.otp) {
+                // Save user data
+                localStorage.setItem('weatherUser', JSON.stringify(userData));
+                
+                // Hide modal
+                hideRegistration();
+                
+                // Welcome notification
+                showNotification(`Welcome ${userData.name}!`, `You're all set up with Smart Weather Forecast.`);
+            } else {
+                showNotification('Error', 'Invalid OTP. Please try again.');
+            }
+        }
+        
+        // Validate email
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // Toggle auto backup
+        function toggleAutoBackup() {
+            if (autoBackup.checked) {
+                localStorage.setItem('autoBackup', 'true');
+                showNotification('Auto Backup', 'Automatic data backup enabled');
+            } else {
+                localStorage.setItem('autoBackup', 'false');
+                showNotification('Auto Backup', 'Automatic data backup disabled');
+            }
+        }
+        
+        // Detect user location for weather
+        function detectLocation() {
+            if (navigator.geolocation) {
+                locationDisplay.textContent = "Detecting location...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        getLocationName(position.coords.latitude, position.coords.longitude);
+                        showNotification('Location Detected', 'Using your current location');
+                        userLocationDetected = true;
+                    },
+                    (error) => {
+                        showNotification('Info', 'Using default location');
+                        currentLocation = "New York";
+                        fetchWeather(currentLocation);
+                        userLocationDetected = false;
+                    }
+                );
+            } else {
+                showNotification('Info', 'Using default location');
+                currentLocation = "New York";
+                fetchWeather(currentLocation);
+                userLocationDetected = false;
+            }
+        }
+        
+        // Get complete location name from coordinates
+        async function getLocationName(lat, lon) {
+            try {
+                const response = await fetch(
+                    `https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${lat},${lon}`
+                );
+                
+                const data = await response.json();
+                if (data && data.location) {
+                    const loc = data.location;
+                    // Create complete location string
+                    let locationStr = loc.name;
+                    if (loc.region && loc.region !== loc.name) locationStr += `, ${loc.region}`;
+                    locationStr += `, ${loc.country}`;
+                    
+                    searchInput.value = locationStr;
+                    currentLocation = locationStr;
+                    fetchWeather(currentLocation);
+                }
+            } catch (error) {
+                console.error("Error getting location name:", error);
+                currentLocation = "New York";
+                fetchWeather(currentLocation);
+            }
+        }
+        
+        // Handle search input with debounce
+        function handleSearchInput() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (searchInput.value.length > 2) {
+                    fetchLocationSuggestions(searchInput.value);
+                } else {
+                    suggestionsContainer.classList.remove('visible');
+                }
+            }, 300);
+        }
+        
+        // Fetch location suggestions
+        async function fetchLocationSuggestions(query) {
+            try {
+                const response = await fetch(
+                    `https://api.weatherapi.com/v1/search.json?key=${API_KEY}&q=${query}`
+                );
+                
+                const data = await response.json();
+                displaySuggestions(data);
+            } catch (error) {
+                console.error("Error fetching location suggestions:", error);
+            }
+        }
+        
+        // Display location suggestions
+        function displaySuggestions(locations) {
+            suggestionsContainer.innerHTML = '';
+            
+            if (!locations || locations.length === 0) {
+                suggestionsContainer.innerHTML = '<div class="suggestion-item">No locations found</div>';
+                suggestionsContainer.classList.add('visible');
+                return;
+            }
+            
+            locations.forEach(location => {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'suggestion-item';
+                suggestion.innerHTML = `
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <div>${location.name}, ${location.country}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${location.region || ''}</div>
+                    </div>
+                `;
+                
+                suggestion.addEventListener('click', () => {
+                    // Create complete location string
+                    let locationStr = location.name;
+                    if (location.region && location.region !== location.name) locationStr += `, ${location.region}`;
+                    locationStr += `, ${location.country}`;
+                    
+                    searchInput.value = locationStr;
+                    currentLocation = locationStr;
+                    fetchWeather(location.name);
+                    suggestionsContainer.classList.remove('visible');
+                    userLocationDetected = false;
+                });
+                
+                suggestionsContainer.appendChild(suggestion);
+            });
+            
+            suggestionsContainer.classList.add('visible');
+        }
+        
+        // Fetch weather data
+        async function fetchWeather(location) {
+            showLoader();
+            
+            try {
+                const response = await fetch(
+                    `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${location}&days=7&aqi=yes&alerts=yes`
+                );
+                
+                const data = await response.json();
+                
+                if (!data || data.error) {
+                    showNotification('Error', 'Location not found');
+                    hideLoader();
+                    return;
+                }
+                
+                // Update UI with data
+                updateCurrentWeather(data);
+                updateHourlyForecast(data);
+                updateWeeklyForecast(data);
+                updateWeatherAnimation(data.current.condition.text);
+                updateWeatherAdvisory(data);
+                
+                // Update time
+                updateTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                
+                // Update weather condition for advisory
+                currentWeatherCondition = data.current.condition.text;
+                currentIsDay = data.current.is_day;
+                
+                showNotification('Success', `Weather data for ${data.location.name} loaded`);
+                
+                // Save backup
+                if (autoBackup.checked) {
+                    backupData = {
+                        ...data,
+                        backupTimestamp: new Date().toISOString()
+                    };
+                    localStorage.setItem('weatherBackup', JSON.stringify(backupData));
+                }
+                
+            } catch (error) {
+                console.error("Error fetching weather data:", error);
+                showNotification('Error', 'Failed to fetch weather data. Using backup if available.');
+                loadBackupData();
+            }
+            
+            hideLoader();
+        }
+        
+        // Load backup data
+        function loadBackupData() {
+            const savedBackup = localStorage.getItem('weatherBackup');
+            if (savedBackup) {
+                const data = JSON.parse(savedBackup);
+                updateCurrentWeather(data);
+                updateHourlyForecast(data);
+                updateWeeklyForecast(data);
+                updateWeatherAnimation(data.current.condition.text);
+                updateWeatherAdvisory(data);
+                
+                showNotification('Info', 'Using backup weather data');
+            } else {
+                showNotification('Error', 'No backup data available');
+            }
+        }
+        
+        // Update current weather display
+        function updateCurrentWeather(data) {
+            const current = data.current;
+            const location = data.location;
+            
+            currentTemp.textContent = `${Math.round(current.temp_c)}°`;
+            weatherDesc.textContent = current.condition.text;
+            
+            // Update weather icon
+            const weatherIcon = getWeatherIcon(current.condition.code, current.is_day);
+            weatherIconMain.className = `fas ${weatherIcon}`;
+            weatherIconLarge.innerHTML = `<i class="fas ${weatherIcon}"></i>`;
+            
+            windSpeed.textContent = `${current.wind_kph} km/h`;
+            humidity.textContent = `${current.humidity}%`;
+            feelsLike.textContent = `${Math.round(current.feelslike_c)}°`;
+            
+            // Create complete location string
+            let locationStr = location.name;
+            if (location.region && location.region !== location.name) locationStr += `, ${location.region}`;
+            locationStr += `, ${location.country}`;
+            locationDisplay.textContent = locationStr;
+            
+            // Get sunrise/sunset from astronomy data
+            if (data.forecast && data.forecast.forecastday.length > 0) {
+                const astro = data.forecast.forecastday[0].astro;
+                sunrise.textContent = astro.sunrise;
+            }
+            
+            // Update weather animation
+            updateWeatherAnimation(current.condition.text);
+        }
+        
+        // Update hourly forecast
+        function updateHourlyForecast(data) {
+            hourlyForecast.innerHTML = '';
+            
+            if (!data.forecast || !data.forecast.forecastday.length) return;
+            
+            const now = new Date();
+            const currentHour = now.getHours();
+            const todayForecast = data.forecast.forecastday[0].hour;
+            
+            // Show next 12 hours
+            for (let i = 0; i < 12; i++) {
+                const hourIndex = (currentHour + i) % 24;
+                const hourData = todayForecast[hourIndex];
+                
+                const hourItem = document.createElement('div');
+                hourItem.className = 'hour-item';
+                
+                const time = new Date(hourData.time);
+                const timeString = time.toLocaleTimeString([], { hour: '2-digit' });
+                
+                hourItem.innerHTML = `
+                    <div class="hour-time">${i === 0 ? 'Now' : timeString}</div>
+                    <div class="day-weather"><i class="fas ${getWeatherIcon(hourData.condition.code, hourData.is_day)}"></i></div>
+                    <div class="hour-temp">${Math.round(hourData.temp_c)}°</div>
+                `;
+                
+                hourlyForecast.appendChild(hourItem);
+            }
+        }
+        
+        // Update weekly forecast for all 7 days
+        function updateWeeklyForecast(data) {
+            weeklyForecast.innerHTML = '';
+            
+            if (!data.forecast || !data.forecast.forecastday.length) return;
+            
+            const forecastDays = data.forecast.forecastday;
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            forecastDays.forEach((dayData, index) => {
+                const date = new Date(dayData.date);
+                const dayName = index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : days[date.getDay()];
+                
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card';
+                
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const dateString = `${date.getDate()} ${monthNames[date.getMonth()]}`;
+                
+                dayCard.innerHTML = `
+                    <div class="day-name">${dayName}</div>
+                    <div class="day-date">${dateString}</div>
+                    <div class="day-weather"><i class="fas ${getWeatherIcon(dayData.day.condition.code, 1)}"></i></div>
+                    <div class="day-temp">${Math.round(dayData.day.mintemp_c)}° / ${Math.round(dayData.day.maxtemp_c)}°</div>
+                    <div class="day-stats">
+                        <span><i class="fas fa-wind"></i> ${dayData.day.maxwind_kph}km/h</span>
+                        <span><i class="fas fa-tint"></i> ${dayData.day.avghumidity}%</span>
+                    </div>
+                `; 
+                
+                // Add alerts for rain or extreme temps
+                if (dayData.day.daily_will_it_rain || dayData.day.daily_chance_of_rain > 50) {
+                    dayCard.innerHTML += '<div class="alert-icon"><i class="fas fa-cloud-rain"></i></div>';
+                } else if (dayData.day.maxtemp_c > 30) {
+                    dayCard.innerHTML += '<div class="alert-icon" style="background: var(--warning);"><i class="fas fa-temperature-high"></i></div>';
+                } else if (dayData.day.mintemp_c < 0) {
+                    dayCard.innerHTML += '<div class="alert-icon" style="background: var(--primary);"><i class="fas fa-snowflake"></i></div>';
+                }
+                
+                weeklyForecast.appendChild(dayCard);
+            });
+        }
+        
+        // Update weather advisory based on current condition
+        function updateWeatherAdvisory(data) {
+            const current = data.current;
+            const today = data.forecast.forecastday[0].day;
+            
+            let healthTipsHTML = '';
+            let activityTipsHTML = '';
+            let travelTipsHTML = '';
+            
+            // UV info
+            const uvIndex = today.uv;
+            let uvText = '';
+            if (uvIndex <= 2) uvText = 'Low UV index - minimal protection needed';
+            else if (uvIndex <= 5) uvText = 'Moderate UV index - protection recommended';
+            else if (uvIndex <= 7) uvText = 'High UV index - protection essential';
+            else if (uvIndex <= 10) uvText = 'Very high UV index - extra protection needed';
+            else uvText = 'Extreme UV index - avoid sun exposure';
+            
+            healthTipsHTML += `<li><i class="fas ${uvIndex <= 2 ? 'fa-check-circle' : uvIndex <= 7 ? 'fa-exclamation-triangle' : 'fa-times-circle'}" 
+                style="color: ${uvIndex <= 2 ? 'var(--success)' : uvIndex <= 7 ? 'var(--warning)' : 'var(--danger)'};"></i> ${uvText}</li>`;
+            
+            // Pollen info (simulated)
+            const pollenCount = Math.floor(Math.random() * 5); // 0-4
+            let pollenText = '';
+            if (pollenCount === 0) pollenText = 'Very low pollen count';
+            else if (pollenCount === 1) pollenText = 'Low pollen count';
+            else if (pollenCount === 2) pollenText = 'Moderate pollen count';
+            else if (pollenCount === 3) pollenText = 'High pollen count';
+            else pollenText = 'Very high pollen count - allergy warning';
+            
+            healthTipsHTML += `<li><i class="fas ${pollenCount < 2 ? 'fa-check-circle' : pollenCount < 4 ? 'fa-exclamation-circle' : 'fa-times-circle'}" 
+                style="color: ${pollenCount < 2 ? 'var(--success)' : pollenCount < 4 ? 'var(--warning)' : 'var(--danger)'};"></i> ${pollenText}</li>`;
+            
+            // Workout info
+            const temp = current.temp_c;
+            let workoutText = '';
+            if (temp > 30) {
+                workoutText = 'Avoid outdoor workouts - too hot';
+            } else if (temp > 25) {
+                workoutText = 'Suitable for indoor workouts - hot outside';
+            } else if (temp > 15) {
+                workoutText = 'Great for outdoor workouts';
+            } else if (temp > 5) {
+                workoutText = 'Suitable for outdoor workouts - dress warm';
+            } else {
+                workoutText = 'Avoid outdoor workouts - too cold';
+            }
+            
+            activityTipsHTML += `<li><i class="fas ${temp > 30 || temp <= 5 ? 'fa-times-circle' : temp > 25 ? 'fa-exclamation-circle' : 'fa-check-circle'}" 
+                style="color: ${temp > 30 || temp <= 5 ? 'var(--danger)' : temp > 25 ? 'var(--warning)' : 'var(--success)'};"></i> ${workoutText}</li>`;
+            
+            // Traffic info
+            const isRaining = current.precip_mm > 0;
+            const isRushHour = (new Date().getHours() >= 7 && new Date().getHours() <= 9) || 
+                              (new Date().getHours() >= 16 && new Date().getHours() <= 19);
+            let trafficText = '';
+            
+            if (isRaining && isRushHour) {
+                trafficText = 'Poor traffic conditions - rain and rush hour';
+            } else if (isRaining) {
+                trafficText = 'Moderate traffic conditions - rain expected';
+            } else if (isRushHour) {
+                trafficText = 'Moderate traffic conditions - rush hour';
+            } else {
+                trafficText = 'Good traffic conditions';
+            }
+            
+            travelTipsHTML += `<li><i class="fas ${isRaining && isRushHour ? 'fa-times-circle' : isRaining || isRushHour ? 'fa-exclamation-circle' : 'fa-check-circle'}" 
+                style="color: ${isRaining && isRushHour ? 'var(--danger)' : isRaining || isRushHour ? 'var(--warning)' : 'var(--success)'};"></i> ${trafficText}</li>`;
+            
+            healthTips.innerHTML = healthTipsHTML;
+            activityTips.innerHTML = activityTipsHTML;
+            travelTips.innerHTML = travelTipsHTML;
+        }
+        
+        // Get appropriate weather icon
+        function getWeatherIcon(code, isDay) {
+            // Simplified version - you can expand this with more codes
+            if (code === 1000) return isDay ? 'fa-sun' : 'fa-moon';
+            if (code === 1003) return isDay ? 'fa-cloud-sun' : 'fa-cloud-moon';
+            if (code === 1006 || code === 1009) return 'fa-cloud';
+            if (code >= 1030 && code <= 1135) return 'fa-smog';
+            if (code >= 1063 && code <= 1201) return 'fa-cloud-rain';
+            if (code >= 1204 && code <= 1237) return 'fa-snowflake';
+            if (code >= 1240 && code <= 1264) return 'fa-cloud-showers-heavy';
+            if (code >= 1273 && code <= 1282) return 'fa-bolt';
+            return 'fa-cloud';
+        }
+        
+        // Update weather animation based on condition
+        function updateWeatherAnimation(condition) {
+            // Clear existing animations
+            weatherAnimation.querySelectorAll('.raindrop, .snowflake, .wind-particle').forEach(el => el.remove());
+            
+            // Remove any existing sun animation
+            const sun = document.getElementById('sunAnimation');
+            if (sun) sun.style.display = 'block';
+            
+            // Add new animations based on weather
+            condition = condition.toLowerCase();
+            
+            if (condition.includes('sunny') || condition.includes('clear')) {
+                // Sunny: Keep sun and clouds
+                if (condition.includes('partly cloudy')) {
+                    // Add extra clouds for partly cloudy
+                    for (let i = 0; i < 3; i++) {
+                        addCloud(i * 30, 10 + Math.random() * 30);
+                    }
+                }
+            } 
+            else if (condition.includes('cloud')) {
+                // Cloudy: Add more clouds
+                for (let i = 0; i < 5; i++) {
+                    addCloud(i * 20, 10 + Math.random() * 40);
+                }
+                sun.style.display = 'none';
+            } 
+            else if (condition.includes('rain') || condition.includes('drizzle')) {
+                // Rain: Add raindrops
+                for (let i = 0; i < 60; i++) {
+                    addRaindrop();
+                }
+                sun.style.display = 'none';
+            } 
+            else if (condition.includes('snow')) {
+                // Snow: Add snowflakes
+                for (let i = 0; i < 30; i++) {
+                    addSnowflake();
+                }
+                sun.style.display = 'none';
+            } 
+            else if (condition.includes('thunder')) {
+                // Thunderstorm: Add wind particles and raindrops
+                for (let i = 0; i < 40; i++) {
+                    addWindParticle();
+                }
+                for (let i = 0; i < 40; i++) {
+                    addRaindrop();
+                }
+                sun.style.display = 'none';
+                
+                // Flash effect for thunder
+                setInterval(() => {
+                    if (Math.random() > 0.97) {
+                        document.body.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                        setTimeout(() => {
+                            document.body.style.backgroundColor = '';
+                        }, 100);
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Helper functions for weather animations
+        function addCloud(topPercent, leftPercent) {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            cloud.style.top = `${topPercent}%`;
+            cloud.style.left = `${leftPercent}%`;
+            cloud.style.width = `${80 + Math.random() * 70}px`;
+            cloud.style.height = `${30 + Math.random() * 30}px`;
+            cloud.style.animation = `cloudFloat ${20 + Math.random() * 20}s infinite linear`;
+            cloud.style.animationDelay = `-${Math.random() * 10}s`;
+            weatherAnimation.appendChild(cloud);
+        }
+        
+        function addRaindrop() {
+            const drop = document.createElement('div');
+            drop.className = 'raindrop';
+            drop.style.left = `${Math.random() * 100}%`;
+            drop.style.animationDuration = `${0.5 + Math.random()}s`;
+            drop.style.animationDelay = `${Math.random() * 2}s`;
+            weatherAnimation.appendChild(drop);
+        }
+        
+        function addSnowflake() {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.innerHTML = '<i class="fas fa-snowflake"></i>';
+            flake.style.left = `${Math.random() * 100}%`;
+            flake.style.animationDuration = `${5 + Math.random() * 5}s`;
+            flake.style.animationDelay = `${Math.random() * 2}s`;
+            flake.style.fontSize = `${10 + Math.random() * 15}px`;
+            flake.style.opacity = `${0.5 + Math.random() * 0.5}`;
+            weatherAnimation.appendChild(flake);
+        }
+        
+        function addWindParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'wind-particle';
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${2 + Math.random() * 3}s`;
+            particle.style.animationDelay = `${Math.random() * 3}s`;
+            weatherAnimation.appendChild(particle);
+        }
+        
+        // Show notification
+        function showNotification(title, message) {
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Toggle SOS mode
+        function toggleSOS() {
+            const isActive = sosToggle.classList.toggle('active');
+            sosPanel.classList.toggle('active');
+            
+            if (isActive) {
+                sosToggle.innerHTML = '<i class="fas fa-shield-alt"></i> TRAVEL SAFETY MODE: ON';
+                sosToggle.style.background = 'var(--success)';
+                showNotification('Safety Mode Activated', 'Travel safety features enabled');
+            } else {
+                sosToggle.innerHTML = '<i class="fas fa-shield-alt"></i> TRAVEL SAFETY MODE: OFF';
+                sosToggle.style.background = 'var(--danger)';
+            }
+        }
+        
+        // Activate SOS emergency mode
+        function activateSOS() {
+            sosEmergencyPanel.classList.add('active');
+            
+            // Simulate SOS progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 2;
+                sosProgress.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    showNotification('Emergency', 'Emergency services notified');
+                }
+            }, 100);
+        }
+        
+        // Deactivate SOS emergency mode
+        function deactivateSOS() {
+            sosEmergencyPanel.classList.remove('active');
+            sosProgress.style.width = '0%';
+            sosToggle.classList.remove('active');
+        }
+        
+        // Toggle theme
+        function toggleTheme() {
+            body.classList.toggle('dark-theme');
+            const theme = body.classList.contains('dark-theme') ? 'Dark' : 'Light';
+            showNotification('Theme Changed', `${theme} theme activated`);
+        }
+        
+        // Search weather
+        function searchWeather() {
+            const location = searchInput.value.trim();
+            if (location) {
+                currentLocation = location;
+                fetchWeather(location);
+                suggestionsContainer.classList.remove('visible');
+                userLocationDetected = false;
+            }
+        }
+        
+        // Share location
+        function shareLocation() {
+            showNotification('Location Shared', 'Your location has been shared with emergency contacts via WhatsApp');
+        }
+        
+        // Show loader
+        function showLoader() {
+            hourlyForecast.innerHTML = '<div class="loader"><div class="loader-spinner"></div></div>';
+            weeklyForecast.innerHTML = '<div class="loader"><div class="loader-spinner"></div></div>';
+            currentTemp.textContent = '--°';
+            weatherDesc.textContent = 'Loading...';
+        }
+        
+        // Hide loader
+        function hideLoader() {
+            // Loaders are replaced with content
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
